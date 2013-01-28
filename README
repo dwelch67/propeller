@@ -1,0 +1,92 @@
+
+
+I have been debating learning to use the Parallax Propeller chip
+
+http://www.parallax.com/tabid/407/Default.aspx
+
+since it came out.  Sparkfun just came out with a board
+
+https://www.sparkfun.com/products/11525
+
+So I went ahead and bought one (two).
+
+Unfortunately you cant use it as-is which drives up the cost of this
+experiment.  if you dont already have this stuff you will want these
+
+FTDI Basic Breakout 3.3V
+https://www.sparkfun.com/products/9873
+Break Away Headers
+https://www.sparkfun.com/products/116
+
+And do some soldering.  On the nice side of this, the pinout is the same
+as the arduino's so you dont have to buy wires and swizzle them about
+just plug the breakout board right on the pins (make sure you have it
+oriented right of course).
+
+As you would expect from Parallax, they have a simple programming
+language for this platform, no it is not BASIC.
+
+And as you would expect I have a desire to try out the instruction set,
+assembly language.  On a linux platform not windows.  The tool that
+everyone links to is Brad's Spin Tool
+
+http://www.fnarfbargle.com/bst.html
+
+Of which there are three, a gui thing, a compiler and a loader.  I used
+the compiler bstc and loader bstl.  It wasnt obvious at first since many
+use the spin language, that the same tool supports PASM which is the
+propeller assembly language.
+
+So the architecture here is there are 8 individual 32 bit processors
+called cogs.  They are identical to each other.  Each cog has
+512 32 bit memory locations, of which 16 are special.  So up to 496
+instructions.  The architecture of these cogs is such that there are
+no registers in the traditional sense, the instructions are essentially
+memory based and any of the 512 locations can be used for operands and
+results.  Their documentation says it the other way, basically there are
+512 registers.  Six of one, half a dozen of another.  Each cog runs
+separately, but everything uses a synchronized clock.
+
+All cogs have access to the hub which has 8192 words of ram and 8192 words
+of rom.  Shared resources like I/O are managed through the hub in a
+round robin fashion so that no two cogs are trying to touch the same
+resource at the same time.
+
+So Parallax has this SPIN language, which if I understand right is
+interpreted by programs in the cogs.  If you search around looking to
+program this thing you will find what I found that there is an LMM they
+call it Large Memory Model for assembly.  But it isnt really PASM, it
+is also interpreted, it allows larger programs to live in the shared
+ram/rom, larger than the 496 locations you have per cog.  The instructions
+are said to be (I didnt look too deeply at them) similar to the real
+instruction set so that some/many can be executed directly in the cog.
+Then if you search further you may find the prop-gcc port.  That really
+gets strange because you see registers like r0 and functions end with
+mov pc,lr.  This is also not the real instruciton set but an interpreted
+one.
+
+For now I am only interested in the real PASM instruction set that
+runs on the cogs.
+
+Most of the examples in this repo:
+
+bstc.linux -b myprog.spin
+which creates myprog.binary, then
+bstl.linux myprog.binary
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

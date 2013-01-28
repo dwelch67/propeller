@@ -1,0 +1,18 @@
+
+
+Derived from blinker01.  This is a multi-cog example.  There are ways
+to share the same I/O resources (maybe) that I have to still fully
+understand.  Instead, only one cog talks to the GPIO to blink the led.
+One cog counts to some number then writes one value into a shared ram
+location in the hub.  One cog counts to some number and writes a different
+value into the same location in the shared ram in the hub.  The led cog
+reads that shared location to decide what way to set the led.  This is
+all set up initially to blink evenly, but because the time to access
+the shared memory has to do with the round robin nature of the hub, etc
+there is some randomness to it.  Over time the blink rate might not
+be on half the time and off half the time.
+
+The point here was not accuracy but to use more than one cog at a time.
+
+
+

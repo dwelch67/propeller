@@ -1,0 +1,180 @@
+
+
+Derived from blinker03.  This is a multi-cog example.
+
+using these two experiments
+
+org 0
+cog_zero
+    mov dira,:pin
+:top
+    mov :count,cnt
+    mov :temp,:count
+    shr :count,#7
+    shr :temp,#8
+    and :count,:temp
+    and :count,:pin
+    mov outa,:count
+    jmp #:top
+
+org 0
+cog_zero
+    mov dira,:pin
+:top
+    mov :count,cnt
+    mov :temp,:count
+    shr :count,#7
+    shr :temp,#8
+    or :count,:temp
+    and :count,:pin
+    mov outa,:count
+    jmp #:top
+
+As the counter runs two neighboring bits of the counter will go through
+the pattern 00, 01, 10, 11.  if you and those two bits together 75%
+of the time the result is 0 and 25% of the time it is a one.  If you
+then drive the led with that you see 75% off and 25% on.  Likewise
+if you or the two bits together 75% of the time the result is a 1 and
+25% of the time a zero.  And if you drive the led with that then you
+get the led on 75% of the time and off 25% of the time.
+
+The schematic for this board shows what we know from this experiment,
+driving the output P15 high turns on the led and low turns it off.
+
+Now this does what you would expect.
+
+org 0
+cog_zero
+    mov dira,:pin
+    mov :ra,cnt
+:top
+    mov outa,:pin
+
+:upper
+    mov :rc,cnt
+    mov :rb,:rc
+    sub :rb,:ra
+    sub :rb,:adel wc
+    if_c jmp #:upper
+    mov :ra,:rc
+
+    mov outa,#0
+
+:lower
+    mov :rc,cnt
+    mov :rb,:rc
+    sub :rb,:ra
+    sub :rb,:bdel wc
+    if_c jmp #:lower
+    mov :ra,:rc
+
+    jmp #:top
+
+
+:pin   long $00008000
+:ra long 0
+:rb long 0
+:rc long 0
+:adel long $100000
+:bdel long $800000
+
+the upper loop is waiting for the difference between the current count
+and the last count to be greater than or equal to 0x100000.  the
+lower loop waits for the count to exceed 0x800000.  the shorter loop,
+upper, is wrapped by the led being turned on then turned off so the
+led should be off most of the time and blink on breifly.  Which it does.
+
+They have a special instruction to make this wait much simpler.  waitcnt.
+It waits until the system counter cnt is equal to the d operand (the
+left operand) when it is then it adds the right operand to the d operand.
+
+org 0
+cog_zero
+    mov dira,:pin
+    mov :ra,cnt
+    add :ra,:start
+:top
+    mov outa,:pin
+    waitcnt :ra,:bdel
+    mov outa,#0
+    waitcnt :ra,:adel
+    jmp #:top
+
+:pin   long $00008000
+:ra long 0
+:adel long  $100000
+:bdel long  $700000
+:start long $100000
+
+The cnt register is not guaranteed to be zero or anything like that on
+start, you are supposed to initialize your code by reading it as above.
+So we read cnt into :ra then add :start which in this case means
+:ra = cnt + 0x100000.
+We turn on the led and wait for
+cnt == :ra which is 0x100000 counts after the start
+then add 0x700000 to :ra
+turn off the led
+wait for cnt == :ra which is now 0x700000 counts
+add 0x100000 to :ra
+go around the loop and turn on the led
+wait for cnt == :ra which is 0x100000 counts (since the last waitcnt)
+and repeat so once the loop gets primed this cog turns its P15 output
+bit on for 1/8th of the time and off for 7/8ths of the time based on
+the timer.
+
+The other cog in this example is the same except :start is larger by
+half the cycle amount 0x800000 clk ticks for the cycle so one cog takes
+the initial cnt value plus 0x100000 the other 0x100000+0x400000 which
+is cnt + 0x500000.  Otherwise it is the same so once the loop gets primed
+it will also have its P15 output on 1/8th of the time and off 7/8ths of
+the time.
+
+As written the led should start with a long blink and have short blinks
+at an even rate.
+
+If you comment out the first cog, the comment symbol is a single quote
+
+PUB main
+    'cognew(@cog_zero,0)
+    cognew(@cog_one,0)
+
+and recompile/assemble and re-run then the long blink is there because
+it is the cog_one code that has the long startup 0x500000 counts before
+it goes into the 1/8th and 7/8ths loop.  But the overall blink rate
+should look slower to you than with both cogs running.
+
+Now comment out the second cog (uncomment the first)
+
+PUB main
+    cognew(@cog_zero,0)
+    'cognew(@cog_one,0)
+
+re-compile and run and the long initial led on period is not there
+it goes right into the 1/8th and 7/8ths cycle.  And is also blinking
+at half the rate of the unmodified example.
+
+
+Some other notes that are spelled out in the propeller manual.  Having
+a colon (:) on the front of a label/variable means it is local.  Locals
+with the same name have to be split from each other by a global label.
+cog_one is a global label.  So we can use the same code almost and same
+variables for both cogs and not have to come up with unique global
+names for everything.
+
+Also note it seems to work with one DAT or two, you do need to put an
+org 0 before cog_zero and before cog_one.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

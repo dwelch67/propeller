@@ -1,0 +1,33 @@
+
+
+Derived from blinker02.  This is a multi-cog example.  They made it
+pretty clear about sharing the I/O.
+
+Pin Outputs are the result of OR'ing the output states of the cogs
+together.
+
+A. A pin is an input only if no active cog sets it to an output.
+B. A pin outputs low only if all active cogs that set it to output
+   also set it to low.
+C. A pin outputs high if any active cog sets it to an output and
+   also sets it high.
+
+Address $1F1 in every cog is the system counter, a free running counter.
+cnt is a reserved word that specifies this counter.
+
+Both cogs set pin P15 to be an output, either one of them would make
+it an output as direction is orred together.
+
+One cog takes bit 25 of cnt (15+10) and basically writes that bit to
+output bit 15.  The other takes bit 22 of cnt (15+7) and writes it to
+output bit 15.  Assuming a 50% duty cycle of each bit 25 will be on
+longer than bit 22, when bit 25 is on the output pin is on and it doesnt
+matter what bit 22 is doing.  when bit 25 of the counter is off then
+P15 reflects what bit 22 is doing on or off.  So there is a longer on
+period then a period of shorter blinks.  25-22 = 3.  2 to the power 3
+is 8.  So there will be 8 state changes for bit 22 when bit 25 is off
+4 on and 4 off.  So the led will be on for a long time then four shorter
+off periods then on for a long time, repeat...
+
+
+

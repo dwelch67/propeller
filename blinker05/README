@@ -1,0 +1,20 @@
+
+
+Derived from blinker04.
+
+P15 is the led, the clk register is read, shifted right 12, then written
+to the led.  So basically bit 27 (15+12) of the clk register is written
+to the led.  The led changes state every 11 seconds give or take.
+
+so 2^27/11= 12201611
+
+2^27/12000000 = 11.18 seconds.
+
+The propeller chip has an internal 12Mhz RC oscillator, which isnt very
+accurate.  This board does not come with an external crystal but one
+can be added.  I dont have one.  So the 12Mhz appears to be what we are
+using and about all I have to choose from.  I think you can only multiply
+the external oscillator, not the internal.  So I cannot get to the 80Mhz
+advertised with this setup as bought.
+
+

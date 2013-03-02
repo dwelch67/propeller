@@ -1,11 +1,13 @@
+UNAME := $(shell uname)
 
+ifeq ($(UNAME), Darwin)
+	BSTC := bstc.osx
+else
+	BSTC := bstc.linux
+endif
 
 blinker02.binary : blinker02.spin
-	bstc.linux -l blinker02.spin
-	bstc.linux -b blinker02.spin
+	$(BSTC) -lb $^
 
 clean :
-	rm -f *.binary
-	rm -f *.list
-
-
+	rm -f *.binary *.list
